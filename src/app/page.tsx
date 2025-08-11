@@ -40,14 +40,13 @@ const getRankIcon = (rank: number) => {
 // --- UI COMPONENTS ---
 
 const CornerLink = ({ href, position, iconSrc, label, size }: { href: string, position: string, iconSrc: string, label: string, size?: string }) => (
-  <Link href={href} legacyBehavior>
-    <a 
-      className={`absolute ${position} z-20 flex flex-col items-center text-white transform transition-transform hover:scale-105 cursor-pointer`}
-      title={label}
-    >
-      <img src={iconSrc} alt={label} className={size || "w-24 h-24"} />
-      <span className="absolute inset-0 flex items-center justify-center text-white text-lg font-bold pointer-events-none">{label}</span>
-    </a>
+  <Link 
+    href={href}
+    className={`absolute ${position} z-20 flex flex-col items-center text-white transform transition-transform hover:scale-105 cursor-pointer`}
+    title={label}
+  >
+    <img src={iconSrc} alt={label} className={size || "w-24 h-24"} />
+    <span className="absolute inset-0 flex items-center justify-center text-black text-5xl font-bold pointer-events-none">{label}</span>
   </Link>
 );
 
@@ -164,16 +163,16 @@ export default function HomePage() {
       </div>
 
       {/* Corner Links */}
-      <CornerLink href="/CL1" position="top-4 left-4" iconSrc="/CL1.svg" label="CL1" />
-      <CornerLink href="/CL3" position="top-4 right-4" iconSrc="/CL3.svg" label="CL3" size="w-48 h-48" />
-      <CornerLink href="/CL4" position="bottom-4 left-4" iconSrc="/CL4.svg" label="CL4" />
-      <CornerLink href="/CU" position="bottom-4 right-4" iconSrc="/CU.svg" label="CU" />
+      <CornerLink href="/CL1" position="top-[-15rem] left-[-15rem]" iconSrc="/CL1.svg" label="CL1" size="w-200 h-200" />
+      <CornerLink href="/CL3" position="top-[-15rem] right-[-15rem]" iconSrc="/CL3.svg" label="CL3" size="w-200 h-200" />
+      <CornerLink href="/CL4" position="bottom-[-15rem] left-[-15rem]" iconSrc="/CL4.svg" label="CL4" size="w-200 h-200" />
+      <CornerLink href="/CU" position="bottom-[-15rem] right-[-15rem]" iconSrc="/CU.svg" label="CU" size="w-200 h-200" />
 
       {/* Foreground Content Container */}
       <div className="relative z-10 flex flex-col items-center w-full">
         {/* Search Box */}
         <div className="w-full max-w-md p-8 bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl text-center">
-          <h1 className="text-4xl font-bold text-green-800 mb-4 font-serif">
+          <h1 className="text-4xl font-bold text-green-800 mb-4 font-serif whitespace-nowrap">
             あなたの畑を見に行こう
           </h1>
           <p className="text-gray-600 mb-8">

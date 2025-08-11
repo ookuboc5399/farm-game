@@ -105,72 +105,30 @@ export default function EmployeePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const currentTime = useClock();
+  const [selectedYear, setSelectedYear] = useState<string>('2025');
+  const [selectedMonth, setSelectedMonth] = useState<string>('08'); // August
+  const [selectedWeekNumber, setSelectedWeekNumber] = useState<string>('2'); // Default to week 2
 
-  const plantPositions = useMemo(() => {
-    const positions: PlantData[] = [];
-    const clients = Object.entries(clientGrowthData);
-    const minDistance = 12;
+  const weekToFileSuffixMap: { [key: string]: string } = {
+    '1': '_1.pdf',
+    '2': '_2.pdf',
+    '3': '_3.pdf',
+    '4': '_4.pdf',
+    '5': '_5.pdf',
+    // Add more as needed
+  };
 
-    for (const [clientName, data] of clients) {
-      let x, y, hasCollision;
-      let attempts = 0;
-      do {
-        x = Math.random() * 90 + 5;
-        y = Math.random() * 50 + 45;
-        hasCollision = false;
-        for (const pos of positions) {
-          const distance = Math.sqrt(Math.pow(pos.x - x, 2) + Math.pow(pos.y - y, 2) * 2);
-          if (distance < minDistance) {
-            hasCollision = true;
-            break;
-          }
-        }
-        attempts++;
-      } while (hasCollision && attempts < 50);
-      positions.push({ clientName, data, x, y });
-    }
-    return positions;
-  }, [clientGrowthData]);
-
-  useEffect(() => {
-    if (!employeeName) return;
-
-    const fetchData = async () => {
-      try {
-        const res = await fetch('/api/sheets');
-        if (!res.ok) throw new Error((await res.json()).details || 'Failed to fetch data');
-        
-        const { data }: { data: FarmEntry[] } = await res.json();
-        const employeeEntries = data.filter(entry => entry.name === employeeName);
-
-        const growthData: ClientGrowthData = {};
-        for (const entry of employeeEntries) {
-          if (entry.client && entry.date) {
-            const existing = growthData[entry.client];
-            if (!existing) {
-              growthData[entry.client] = { count: 1, lastContact: entry.date };
-            } else {
-              const isNewer = new Date(entry.date) > new Date(existing.lastContact);
-              growthData[entry.client] = {
-                count: existing.count + 1,
-                lastContact: isNewer ? entry.date : existing.lastContact,
-              };
-            }
-          }
-        }
-        setClientGrowthData(growthData);
-
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [employeeName]);
+  const currentPdfPath = useMemo(() => {
+    const suffix = weekToFileSuffixMap[selectedWeekNumber];
+    if (!suffix) return null;
+    return `/${employeeName}/${selectedYear}${selectedMonth}${suffix}`;
+  }, [employeeName, selectedYear, selectedMonth, selectedWeekNumber]);
 
   const totalContributions = Object.values(clientGrowthData).reduce((sum, data) => sum + data.count, 0);
+
+  const years = Array.from({ length: 5 }, (_, i) => (2024 + i).toString()); // 2024 to 2028
+  const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0')); // 01 to 12
+  const weekNumbers = Array.from({ length: 5 }, (_, i) => (i + 1).toString()); // 1 to 5
 
   return (
     <main 
@@ -180,10 +138,34 @@ export default function EmployeePage() {
       {/* Header now acts as a container for absolutely positioned UI elements */}
       <header className="relative w-full h-24 text-white z-20">
         {/* Top Left */}
-        <div className="absolute top-0 left-0">
+        <div className="absolute top-0 left-0 flex items-center gap-x-4">
             <Link href="/" className="bg-black/60 p-3 rounded-lg text-sm text-blue-300 hover:underline cursor-pointer">
               ← 畑をさがす
             </Link>
+            {/* Date Selection Dropdowns */}
+            <div className="flex gap-x-2 bg-black/60 p-2 rounded-lg">
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="bg-transparent text-white text-sm cursor-pointer outline-none"
+              >
+                {years.map(year => <option key={year} value={year}>{year}年</option>)}
+              </select>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="bg-transparent text-white text-sm cursor-pointer outline-none"
+              >
+                {months.map(month => <option key={month} value={month}>{parseInt(month)}月</option>)}
+              </select>
+              <select
+                value={selectedWeekNumber}
+                onChange={(e) => setSelectedWeekNumber(e.target.value)}
+                className="bg-transparent text-white text-sm cursor-pointer outline-none"
+              >
+                {weekNumbers.map(weekNum => <option key={weekNum} value={weekNum}>第{weekNum}週</option>)}
+              </select>
+            </div>
         </div>
 
         {/* Top Center */}
@@ -218,6 +200,13 @@ export default function EmployeePage() {
             ))
         )}
       </div>
+
+      {/* PDF Viewer Section */}
+      {currentPdfPath && (
+        <div className="relative z-10 w-full max-w-7xl mx-auto mt-8 bg-white rounded-lg shadow-xl overflow-hidden" style={{ height: '80vh' }}>
+          <iframe src={currentPdfPath} className="w-full h-full" frameBorder="0"></iframe>
+        </div>
+      )}
     </main>
   );
 }
