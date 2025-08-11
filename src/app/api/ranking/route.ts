@@ -5,6 +5,7 @@ import { google } from 'googleapis';
 interface WeeklyRank {
   name: string;
   count: number;
+  clients: string[];
 }
 
 // Helper function to get the start of the current week (Monday)
@@ -30,31 +31,44 @@ export async function GET() {
 
     const response = await sheets.spreadsheets.values.batchGet({
       spreadsheetId,
-      ranges: ['D2:D', 'N2:N'], // Only need Name and Date columns
+      ranges: ['D2:D', 'E2:E', 'N2:N'], // Name, Client, Confirmed Date
     });
 
     const valueRanges = response.data.valueRanges;
-    if (!valueRanges || valueRanges.length < 2) {
+    if (!valueRanges || valueRanges.length < 3) {
       return NextResponse.json({ error: 'Could not find enough data in the sheet.' }, { status: 500 });
     }
 
-    const names = valueRanges[0].values ? valueRanges[0].values.flat() : [];
-    const dates = valueRanges[1].values ? valueRanges[1].values.flat() : [];
+    const allValues = [
+      valueRanges[0].values || [], // D: names
+      valueRanges[1].values || [], // E: clients
+      valueRanges[2].values || [], // N: confirmed dates
+    ];
+
+    const maxRows = Math.max(...allValues.map(range => range.length));
     const startOfWeek = getStartOfWeek();
 
-    const weeklyCounts: { [name: string]: number } = {};
+    const weekly: { [name: string]: { count: number; clients: Set<string> } } = {};
 
-    for (let i = 0; i < dates.length; i++) {
-      const entryDate = new Date(dates[i]);
-      const entryName = names[i];
+    for (let i = 0; i < maxRows; i++) {
+      const name = allValues[0][i]?.[0] || '';
+      const client = allValues[1][i]?.[0] || '';
+      const dateN = allValues[2][i]?.[0] || '';
 
-      if (entryName && !isNaN(entryDate.getTime()) && entryDate >= startOfWeek) {
-        weeklyCounts[entryName] = (weeklyCounts[entryName] || 0) + 1;
+      if (!name || !dateN) continue;
+
+      const entryDate = new Date((dateN as string).replace(/\//g, '-'));
+      if (!isNaN(entryDate.getTime()) && entryDate >= startOfWeek) {
+        if (!weekly[name]) {
+          weekly[name] = { count: 0, clients: new Set<string>() };
+        }
+        weekly[name].count += 1;
+        if (client) weekly[name].clients.add(client);
       }
     }
 
-    const rankedData: WeeklyRank[] = Object.entries(weeklyCounts)
-      .map(([name, count]) => ({ name, count }))
+    const rankedData: WeeklyRank[] = Object.entries(weekly)
+      .map(([name, info]) => ({ name, count: info.count, clients: Array.from(info.clients) }))
       .sort((a, b) => b.count - a.count);
 
     return NextResponse.json({ data: rankedData });

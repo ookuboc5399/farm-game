@@ -9,6 +9,7 @@ import Image from 'next/image';
 interface RankEntry {
   name: string;
   count: number;
+  clients?: string[];
 }
 
 interface FarmEntry {
@@ -63,14 +64,22 @@ const RankingBoard = ({ ranking, loading }: { ranking: RankEntry[], loading: boo
         <ul className="space-y-3">
           {ranking.slice(0, 5).map((player, index) => {
             const { color, initial } = getUserIcon(player.name);
+            const companies = (player.clients && player.clients.length > 0) ? player.clients.join('、 ') : '';
             return (
-              <li key={player.name} className="flex items-center gap-x-4 p-2 rounded-lg hover:bg-gray-50">
-                <div className="w-8 text-center text-xl">{getRankIcon(index)}</div>
-                <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center text-white font-bold`}>
-                  {initial}
+              <li key={player.name} className="flex flex-col gap-y-1 p-3 rounded-lg hover:bg-gray-50">
+                <div className="flex items-center gap-x-4">
+                  <div className="w-8 text-center text-xl">{getRankIcon(index)}</div>
+                  <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center text-white font-bold`}>
+                    {initial}
+                  </div>
+                  <div className="flex-1 flex items-center gap-2 min-w-0">
+                    <span className="text-lg font-semibold text-gray-700 whitespace-nowrap">{player.name}</span>
+                    {companies && (
+                      <span className="text-sm text-gray-500 truncate" title={companies}>（{companies}）</span>
+                    )}
+                  </div>
+                  <span className="text-lg font-bold text-blue-600">{player.count.toLocaleString()} <span className="text-sm text-gray-500">回</span></span>
                 </div>
-                <span className="text-lg font-semibold text-gray-700 flex-1">{player.name}</span>
-                <span className="text-lg font-bold text-blue-600">{player.count.toLocaleString()} <span className="text-sm text-gray-500">回</span></span>
               </li>
             );
           })}
