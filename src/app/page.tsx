@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 // --- DATA INTERFACES ---
 interface RankEntry {
@@ -42,10 +43,10 @@ const getRankIcon = (rank: number) => {
 const CornerLink = ({ href, position, iconSrc, label, size }: { href: string, position: string, iconSrc: string, label: string, size?: string }) => (
   <Link 
     href={href}
-    className={`absolute ${position} z-20 flex flex-col items-center text-white transform transition-transform hover:scale-105 cursor-pointer`}
+    className={`${size || "w-24 h-24"} absolute ${position} z-20 flex flex-col items-center text-white transform transition-transform hover:scale-105 cursor-pointer`}
     title={label}
   >
-    <img src={iconSrc} alt={label} className={size || "w-24 h-24"} />
+    <Image src={iconSrc} alt={label} fill objectFit="contain" />
     <span className="absolute inset-0 flex items-center justify-center text-black text-5xl font-bold pointer-events-none">{label}</span>
   </Link>
 );
@@ -99,8 +100,8 @@ export default function HomePage() {
         setLoadingRanking(false);
 
         const allNamesRes = await fetch('/api/sheets');
-        const allNamesJson = await allNamesRes.json();
-        const uniqueNames = Array.from(new Set(allNamesJson.data.map((entry: FarmEntry) => entry.name).filter(Boolean)));
+        const { data: allNamesData }: { data: FarmEntry[] } = await allNamesRes.json();
+        const uniqueNames = Array.from(new Set(allNamesData.map((entry: FarmEntry) => entry.name).filter(Boolean)));
         setAllEmployees(uniqueNames);
 
       } catch (error) {

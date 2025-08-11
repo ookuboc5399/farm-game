@@ -109,6 +109,32 @@ export default function EmployeePage() {
   const [selectedMonth, setSelectedMonth] = useState<string>('08'); // August
   const [selectedWeekNumber, setSelectedWeekNumber] = useState<string>('2'); // Default to week 2
 
+  const plantPositions = useMemo(() => {
+    const positions: PlantData[] = [];
+    const clients = Object.entries(clientGrowthData);
+    const minDistance = 12;
+
+    for (const [clientName, data] of clients) {
+      let x, y, hasCollision;
+      let attempts = 0;
+      do {
+        x = Math.random() * 90 + 5;
+        y = Math.random() * 50 + 45;
+        hasCollision = false;
+        for (const pos of positions) {
+          const distance = Math.sqrt(Math.pow(pos.x - x, 2) + Math.pow(pos.y - y, 2) * 2);
+          if (distance < minDistance) {
+            hasCollision = true;
+            break;
+          }
+        }
+        attempts++;
+      } while (hasCollision && attempts < 50);
+      positions.push({ clientName, data, x, y });
+    }
+    return positions;
+  }, [clientGrowthData]);
+
   const weekToFileSuffixMap: { [key: string]: string } = {
     '1': '_1.pdf',
     '2': '_2.pdf',
